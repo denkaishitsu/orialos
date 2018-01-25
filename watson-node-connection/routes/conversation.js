@@ -25,7 +25,7 @@ function watosnConversationAPI(req, res) {
 
   //User Question
   var req_url = req.url;
-  var search = req.query.text;  
+  var search = req.query.text.replace(/\r?\n/g,"");  
   //console.log(req);
   console.log(search);
 
@@ -43,8 +43,8 @@ function watosnConversationAPI(req, res) {
           }
 
           //Care for not undersatnding intents.
-          var intents = response.intetnts === undefined ? 'not understatnd' : response.intents[0].intent;
-          var confidence = response.intetnts === undefined ? 0 : response.intents[0].confidence;
+          var intents = !Object.keys(response.intents).length ? 'not understatnd' : response.intents[0].intent;
+          var confidence = !Object.keys(response.intents).length ? 0 : response.intents[0].confidence;
 
           //Return messages wiht success
           resolve(
@@ -77,6 +77,10 @@ function watosnConversationAPI(req, res) {
       result.text = 'ご利用いただき、ありがとうございます。\n大変申し訳ありません。\nただいまシステムトラブルのため、ご案内させていただくことができません。\nサイト内ご質問やお問い合わせにつきましては、よくあるご質問をご確認いただくか、カスタマーサポートまでご連絡お願いいたします。&-&http//サイトFAQページ';
       result.intents = 'Watson conversation error';
       result.confidence = 0;
+    } else if (result.confidence < 0.1) {
+      //Confidence Error
+      result.text = '大変申し訳ございません。私の理解不足でご案内することできません。\nお手数ですが、再度メッセージをご入力いただくか。カスタマーサポートまでご連絡お願いいたします。';
+      result.intents = 'Not enough Confidene(<0.5)'; 
     }
 
     //Retrun formatting JSON answers
