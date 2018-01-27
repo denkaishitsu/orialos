@@ -24,12 +24,12 @@ router.get('/', function(req, res, next) {
 function watosnConversationAPI(req, res) {
 
   //User Question
-  var req_url = req.url;
+  var req_url = decodeURIComponent(req.url);
   var search = req.query.text.replace(/\r?\n/g,"");  
   //console.log(req);
   console.log(search);
 
-  //Get Answer from Watson
+  //Get Answer from Watson conversation
   var watsonAnswer = function(question) {
 
       //call watson conversation with Promise
@@ -42,14 +42,33 @@ function watosnConversationAPI(req, res) {
             return;
           }
 
-          //Care for not undersatnding intents.
-          var intents = !Object.keys(response.intents).length ? 'not understatnd' : response.intents[0].intent;
-          var confidence = !Object.keys(response.intents).length ? 0 : response.intents[0].confidence;
+          //Intents & Entities, Confidense setting
+          if (!Object.keys(response.intents).length && !Object.keys(response.entities).length) {
+            //intents & entities are both nothing.
+            var intents = 'not understatnd';
+            var entities = 'not understatnd';
+            var confidence = [ 0, 0 ];
+          } else if (Object.keys(response.intents).length && !Object.keys(response.entities).length) {
+            //intents is, but entities is nothing.
+            var intents = response.intents[0].intent;
+            var entities = 'nothing';
+            var confidence = [ response.intents[0].confidence, 0 ];
+          } else if (!Object.keys(response.intents).length && Object.keys(response.entities).length) {
+            //intents is nothing, but entities is.
+            var intents = 'nothing';
+            var entities = response.entities[0].entity;
+            var confidence = [ 0, response.entities[0].confidence ];
+          } else {
+            var intents = response.intents[0].intent;
+            var entities = response.entities[0].entity;
+            var confidence = [ response.intents[0].confidence, response.entities[0].confidence];
+          }
 
           //Return messages wiht success
           resolve(
             {
               intents : intents,
+              entities : entities,
               confidence : confidence,
               conversation_id : response.context.conversation_id,
               text : response.output.text[0],
@@ -64,23 +83,28 @@ function watosnConversationAPI(req, res) {
   var answerFormat2Json = function(result) {
 
     //result log to STDOUT
-    console.log(result);  
+    console.log(result); 
+
+    var timeout_sec = 0.01
 
     //Error result setting
     if (result instanceof pt.TimeoutError) {
       //Timeout Error
       result.text = '大変申し訳ございません。ただいま、たくさんのお客様にご利用いただいております。ご案内にお時間かかってしまいます。\n\nお手数ですが、少しお時間経あけていただき、再度メッセージお送りお願いいたします。';
       result.intents = 'Timeout of 10sec';
-      result.confidence = 0;
+      result.entities = 'Timeout of 10sec';
+      result.confidence = [ 0, 0 ];
     } else if (result.error) {
       //Watson Converation API Error
       result.text = 'ご利用いただき、ありがとうございます。\n大変申し訳ありません。\nただいまシステムトラブルのため、ご案内させていただくことができません。\nサイト内ご質問やお問い合わせにつきましては、よくあるご質問をご確認いただくか、カスタマーサポートまでご連絡お願いいたします。&-&http//サイトFAQページ';
       result.intents = 'Watson conversation error';
-      result.confidence = 0;
-    } else if (result.confidence < 0.1) {
+      result.entities = 'Watson conversation error';
+      result.confidence = [ 0, 0 ];
+    } else if (result.confidence < timeout_sec) {
       //Confidence Error
       result.text = '大変申し訳ございません。私の理解不足でご案内することできません。\nお手数ですが、再度メッセージをご入力いただくか。カスタマーサポートまでご連絡お願いいたします。';
-      result.intents = 'Not enough Confidene(<0.5)'; 
+      result.intents = 'Not enough Confidene(<' + timeout_sec + ')'; 
+      result.entities = 'Not enough Confidene(<' + timeout_sec + ')'; 
     }
 
     //Retrun formatting JSON answers
@@ -91,8 +115,9 @@ function watosnConversationAPI(req, res) {
       answer_list: [
         {
           answer: result.text,
-          class_name: result.intents,
-          cos_similarity: 0.8226028135219948,
+          intents: result.intents,
+          entities: result.entities,
+          cos_similarity: 0.8,
           confidence: result.confidence,
           answer_altered: true,
           question: null
