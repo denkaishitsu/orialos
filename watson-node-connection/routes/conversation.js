@@ -4,6 +4,9 @@ var express = require('express');
 var router = express.Router();
 var pt = require('promise-timeout');
 
+//System variables
+var conf = require('../config.json');
+
 //Instance watson conversation
 var ConversationV1 = require('watson-developer-cloud/conversation/v1');
 var conversation = new ConversationV1({
@@ -25,7 +28,7 @@ function watosnConversationAPI(req, res) {
 
   //User Question
   var req_url = decodeURIComponent(req.url);
-  var search = req.query.text.replace(/\r?\n/g,"");  
+  var search = req.query.text.replace(/\r?\n/g,"");
   //console.log(req);
   console.log(search);
 
@@ -67,10 +70,10 @@ function watosnConversationAPI(req, res) {
           //Return messages wiht success
           resolve(
             {
+              conversation_id : response.context.conversation_id,
               intents : intents,
               entities : entities,
               confidence : confidence,
-              conversation_id : response.context.conversation_id,
               text : response.output.text[0],
               nodes_visited : response.output.nodes_visited[0]
             }
@@ -82,13 +85,11 @@ function watosnConversationAPI(req, res) {
   //Answer Formatting to JSON
   var answerFormat2Json = function(result) {
 
-    //result log to STDOUT
-    console.log(result); 
-
-    var timeout_sec = 0.01
-
     //Error result setting
-    if (result instanceof pt.TimeoutError) {
+    if (result.conversation_id == 'not enough question length') {
+      //Not enough Question length
+      result.text = 'お言葉もっとください(開発中文言)。';
+    } else if (result instanceof pt.TimeoutError) {
       //Timeout Error
       result.text = '大変申し訳ございません。ただいま、たくさんのお客様にご利用いただいております。ご案内にお時間かかってしまいます。\n\nお手数ですが、少しお時間経あけていただき、再度メッセージお送りお願いいたします。';
       result.intents = 'Timeout of 10sec';
@@ -100,12 +101,15 @@ function watosnConversationAPI(req, res) {
       result.intents = 'Watson conversation error';
       result.entities = 'Watson conversation error';
       result.confidence = [ 0, 0 ];
-    } else if (result.confidence < timeout_sec) {
+    } else if (result.confidence < conf.confidence_exclusion) {
       //Confidence Error
       result.text = '大変申し訳ございません。私の理解不足でご案内することできません。\nお手数ですが、再度メッセージをご入力いただくか。カスタマーサポートまでご連絡お願いいたします。';
-      result.intents = 'Not enough Confidene(<' + timeout_sec + ')'; 
-      result.entities = 'Not enough Confidene(<' + timeout_sec + ')'; 
+      result.intents = 'Not enough Confidene(<' + conf.confidence_exclusion + ')'; 
+      result.entities = 'Not enough Confidene(<' + conf.confidence_exclusion + ')'; 
     }
+
+    //result log to STDOUT
+    console.log(result); 
 
     //Retrun formatting JSON answers
     return {
@@ -132,14 +136,22 @@ function watosnConversationAPI(req, res) {
     res.send(answerFormat2Json(result));
   };
 
-  //Call Watson Answer & response send(Timeout 10second)
-  pt.timeout(watsonAnswer(search), 10000)
-  .then(function(answer) {
-    resResult(answer);
-  }).catch(function(error) {
-    console.error(error); //erorr log to STDERR 
-    resResult(error);
-  });
+  //Needs minimus search length
+  if (conf.question_min_length <= search.length) {
+
+    //Call Watson Answer & response send(Timeout 10second)
+    pt.timeout(watsonAnswer(search), conf.watson_timeout)
+    .then(function(answer) {
+      resResult(answer);
+    }).catch(function(error) {
+      console.error(error); //erorr log to STDERR 
+      resResult(error);
+    });
+
+  } else {
+    resResult(conf.under_min_length);
+  }
+
 
 }
 

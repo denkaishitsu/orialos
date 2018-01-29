@@ -1,0 +1,13 @@
+{
+    "confidence_exclusion": 0.01,
+    "watson_timeout": 10000,
+    "question_min_length": 4,
+    "under_min_length" : {
+    	"conversation_id" : "not enough question length",
+    	"intents" : "not enough question length",
+        "entities" : "not enough question length",
+        "confidence" : [ 0, 0 ],
+        "text" : "",
+        "nodes_visited" : "nothing"
+    }
+}
