@@ -41,12 +41,16 @@ do
         sed 's/"//g'                          | 
         awk -v col=$COL -F',' '{print $col}'  )
   Q=$(echo ${QUEST} | perl -MURI::Escape -lne 'print uri_escape($_)' | sed 's/\n//g')
-  ANSWER=$(curl ${HOST}/v1/searchers/alias/main/search-answer?text=${Q})
-  #ANSWER=$(curl localhost:3000/v1/searchers/alias/main/search-answer?text=${Q})
+  if [ "${HOST}" = "localhost" ]; then
+    ANSWER=$(curl localhost:3000/v1/searchers/alias/main/search-answer?text=${Q})
+  else
+    ANSWER=$(curl https://${HOST}/v1/searchers/alias/main/search-answer?text=${Q})
+  fi
   A=$(echo $ANSWER | tr '\n' '|||')
   echo $A | sed -e 's/|//g' >> QA_LOG/${RESULTS}
   usleep 300
   echo $Q | perl -MURI::Escape -lne 'print uri_unescape($_)'
+  echo $A
 done < TMP_INPUT_DATA
 
 if [ -z "$(cat QA_LOG/${ERR_LOG})" ]; then 
