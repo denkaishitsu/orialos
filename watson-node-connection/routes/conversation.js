@@ -5,7 +5,9 @@ var router = express.Router();
 var pt = require('promise-timeout');
 
 //System variables
-var conf = require('../config.json');
+var conf = require('../config/config.json');
+var default_msg = require('../config/default.message.json');
+var valid = require('../modules/validation.js');
 
 //Instance watson conversation
 var ConversationV1 = require('watson-developer-cloud/conversation/v1');
@@ -88,22 +90,22 @@ function watosnConversationAPI(req, res) {
     //Error result setting
     if (result.conversation_id == 'not enough question length') {
       //Not enough Question length
-      result.text = 'お言葉もっとください(開発中文言)。';
+      result.text = default_msg.min_length_error;
     } else if (result instanceof pt.TimeoutError) {
       //Timeout Error
-      result.text = '大変申し訳ございません。ただいま、たくさんのお客様にご利用いただいております。ご案内にお時間かかってしまいます。\n\nお手数ですが、少しお時間経あけていただき、再度メッセージお送りお願いいたします。';
+      result.text = default_msg.timeout_error;
       result.intents = 'Timeout of 10sec';
       result.entities = 'Timeout of 10sec';
       result.confidence = [ 0, 0 ];
     } else if (result.error) {
       //Watson Converation API Error
-      result.text = 'ご利用いただき、ありがとうございます。\n大変申し訳ありません。\nただいまシステムトラブルのため、ご案内させていただくことができません。\nサイト内ご質問やお問い合わせにつきましては、よくあるご質問をご確認いただくか、カスタマーサポートまでご連絡お願いいたします。&-&http//サイトFAQページ';
+      result.text = default_msg.watson_converation_api_error;
       result.intents = 'Watson conversation error';
       result.entities = 'Watson conversation error';
       result.confidence = [ 0, 0 ];
     } else if (result.confidence < conf.confidence_exclusion) {
       //Confidence Error
-      result.text = '大変申し訳ございません。私の理解不足でご案内することできません。\nお手数ですが、再度メッセージをご入力いただくか。カスタマーサポートまでご連絡お願いいたします。';
+      result.text = default_msg.confidence_error;
       result.intents = 'Not enough Confidene(<' + conf.confidence_exclusion + ')'; 
       result.entities = 'Not enough Confidene(<' + conf.confidence_exclusion + ')'; 
     }
@@ -136,8 +138,8 @@ function watosnConversationAPI(req, res) {
     res.send(answerFormat2Json(result));
   };
 
-  //Needs minimus search length
-  if (conf.question_min_length <= search.length) {
+  //Needs minimus search length & care of exclusion strings.
+  if (valid.func(search)) {
 
     //Call Watson Answer & response send(Timeout 10second)
     pt.timeout(watsonAnswer(search), conf.watson_timeout)

@@ -9,5 +9,11 @@
         "confidence" : [ 0, 0 ],
         "text" : "",
         "nodes_visited" : "nothing"
+    },
+    "exclusion_min_length_strings" : {
+        "unresolved" : "未解決",
+        "resolved" : "解決",
+        "return" : "返品",
+        "shipping_cost" : "送料"
     }
 }
