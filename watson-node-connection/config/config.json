@@ -15,5 +15,6 @@
         "resolved" : "解決",
         "return" : "返品",
         "shipping_cost" : "送料"
-    }
+    },
+    "sentence_string_length" : 3
 }

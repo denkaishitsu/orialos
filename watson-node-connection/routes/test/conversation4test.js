@@ -5,9 +5,9 @@ var router = express.Router();
 var pt = require('promise-timeout');
 
 //System variables
-var conf = require('../config/config.json');
-var default_msg = require('../config/default.message.json');
-var valid = require('../modules/validation.js');
+var conf = require('../../config/config.json');
+var default_msg = require('../../config/default.message.json');
+var valid = require('../../modules/validation.js');
 
 
 //Instance watson conversation
@@ -120,23 +120,16 @@ function watosnConversationAPI(req, res) {
     //result log to STDOUT
     console.log(result); 
 
-    //Retrun formatting JSON answers
-    return {
-      searcher_id: result.conversation_id,
-      url: req_url,
-      text: search,
-      answer_list: [
-        {
-          answer: result.text,
-          intents: result.intents,
-          entities: result.entities,
-          cos_similarity: 0.8,
-          confidence: result.confidence,
-          answer_altered: true,
-          question: null
-        }
-      ]
-    };
+    //
+    if (result.text) {
+      var answer = result.text.replace(/\r?\n/g,"");
+      answer = answer.replace(/,/g,"");
+    } else {
+      var answer = '';
+    }
+    //Retrun results
+    //質問文、Intents、Intent Confidence、Entities、Entity Confidence、回答文
+    return search + ',' + result.intents + ',' + result.confidence[0]  + ',' + result.entities + ',' + result.confidence[1] + ',' + answer;
   };
 
   //Response sendding

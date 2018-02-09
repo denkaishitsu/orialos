@@ -11,6 +11,7 @@
 #
 #############################
 echo 'start script'
+start_time=`date +%s`
 
 #LOG Dir
 if [ -e QA_LOG ]; then
@@ -42,9 +43,9 @@ do
         awk -v col=$COL -F',' '{print $col}'  )
   Q=$(echo ${QUEST} | perl -MURI::Escape -lne 'print uri_escape($_)' | sed 's/\n//g')
   if [ "${HOST}" = "localhost" ]; then
-    ANSWER=$(curl localhost:3000/v1/searchers/alias/main/search-answer?text=${Q})
+    ANSWER=$(curl localhost:3000/qa_curl_test?text=${Q})
   else
-    ANSWER=$(curl https://${HOST}/v1/searchers/alias/main/search-answer?text=${Q})
+    ANSWER=$(curl https://${HOST}/qa_curl_test?text=${Q})
   fi
   A=$(echo $ANSWER | tr '\n' '|||')
   echo $A | sed -e 's/|//g' >> QA_LOG/${RESULTS}
@@ -59,6 +60,10 @@ fi
 
 rm -f TMP_INPUT_DATA
 
+end_time=`date +%s`
+time=$((end_time - start_time))
+
+echo "Time:"$time
 echo "finish script"
 
 exit 0 
