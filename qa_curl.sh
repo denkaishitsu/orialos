@@ -7,7 +7,7 @@
 # 引数
 #   $1:Qデータ(.csv)
 #   $2:Host
-#   $2:上記QデータのQuestionの列の位置[デフォルト1]
+#   $3:上記QデータのQuestionの列の位置[デフォルト1]
 #
 #############################
 echo 'start script'
@@ -49,7 +49,7 @@ do
   fi
   A=$(echo $ANSWER | tr '\n' '|||')
   echo $A | sed -e 's/|//g' >> QA_LOG/${RESULTS}
-  usleep 300
+  sleep 2
   echo $Q | perl -MURI::Escape -lne 'print uri_unescape($_)'
   echo $A
 done < TMP_INPUT_DATA
