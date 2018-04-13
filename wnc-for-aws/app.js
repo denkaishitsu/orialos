@@ -5,10 +5,10 @@ var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
 var morgan = require('morgan');
-var expressSession = require('express-session');
+//var expressSession = require('express-session');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-require('dotenv').config();
+//require('dotenv').config();
 
 //Require of router middlewares
 var index = require('./routes/index');
@@ -20,7 +20,7 @@ var qa_curl_test = require('./routes/test/conversation4test');
 var app = express();
 
 //Instatnce session for sticky server of auto-scaling
-var sessionStore  = new expressSession.MemoryStore;
+//var sessionStore  = new expressSession.MemoryStore;
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -35,7 +35,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Use JSESSIONID as cookie and in memory session store
-app.use(expressSession({ key: 'JSESSIONID', secret: 'whatever', store: sessionStore})); 
+//app.use(expressSession({ key: 'JSESSIONID', secret: 'whatever', store: sessionStore})); 
 
 //Using routers middlewares
 app.use('/', index);

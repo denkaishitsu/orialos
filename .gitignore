@@ -1,3 +1,4 @@
 watson-node-connection/.env
-watson-node-connection/manifest.yml
+watson-node-connection/manifest.yml*
 watson-node-connection/node_modules/
+wnc-for-aws/

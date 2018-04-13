@@ -10,8 +10,6 @@ var conf = require('../config/config.json');
 var default_msg = require('../config/default.message.json');
 var valid = require('../modules/validation.js');
 
-console.log(env.CONVERSATION_USERNAME);
-
 //Instance watson conversation
 var ConversationV1 = require('watson-developer-cloud/conversation/v1');
 var conversation = new ConversationV1({
