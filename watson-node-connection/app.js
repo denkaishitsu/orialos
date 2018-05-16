@@ -41,6 +41,7 @@ app.use(expressSession({ key: 'JSESSIONID', secret: 'whatever', store: sessionSt
 app.use('/', index);
 app.use('/samples', samples);
 app.use('/v1/searchers/alias/main/search-answer', conversation);
+app.use('/v1/searchers/alias/ur/search-answer', conversation);
 app.use('/qa_curl_test', qa_curl_test);
 
 // catch 404 and forward to error handler
